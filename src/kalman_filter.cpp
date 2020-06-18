@@ -26,16 +26,14 @@ void KalmanFilter::Init( VectorXd &x_in,
   F_ = F_in;
   H_ = H_in;
   Hj_ = Hj_in;
-  // checking if eigen does a deep or shallow copy with
-  // operator=.
-  // cout << &Hj_(0) << endl;
-  // cout << &Hj_in(0) << endl;
-  // The two printed values are different so it appears to do a deep copy.
-  // A deep copy is the desired behavior, because when I call Init in 
-  // FusionEKF.cpp, some of the arguments have local scope.
   R_ = R_in;
+
   R_ekf_ = R_ekf_in;
+
   Q_ = Q_in;
+
+  //define an identity matrix
+
   I_ = Eigen::MatrixXd::Identity(4,4);
 }
 
@@ -47,10 +45,13 @@ void KalmanFilter::Predict()
   P_ = F_*P_*Ft + Q_;
 }
 
+
 void KalmanFilter::Update(const VectorXd &z) 
 {
   // Update the state using Kalman Filter equations
-  VectorXd y = z - H_*x_;
+
+  VectorXd z_pred = H_ * x_;
+  VectorXd y = z - z_pred;
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_*P_*Ht + R_;
   MatrixXd Si = S.inverse();
@@ -61,6 +62,8 @@ void KalmanFilter::Update(const VectorXd &z)
   P_ = ( I_ - K*H_ )*P_;
 }
 
+
+
 void KalmanFilter::UpdateEKF(const VectorXd &z) 
 {
   float px = x_[0];
@@ -68,22 +71,39 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   float vx = x_[2];
   float vy = x_[3];
 
-  // If rho == 0, skip the update step to avoid dividing by zero.
-  // This is crude but should be fairly robust on our data set.
+
+//get rid of initial noise
   if( px == 0. && py == 0. )
     return;
 
   Hj_ = tools.CalculateJacobian( x_ );
-  VectorXd hofx(3);
-  float rho = sqrt( px*px + py*py );
-  hofx << rho, atan2( py, px ), ( px*vx + py*vy )/rho;
+
+
+  VectorXd z_pred(3);
+
+  double rho = sqrt( px*px + py*py );
+  double phi = atan2( py, px ); 
+  double rho_dot;
+
+  if(fabs(rho) > 0.0001){
+    rho_dot = (px *vx + py*vy)/rho;
+  }
+  else{
+    rho_dot = 0; 
+  }
+
+
+  z_pred << rho, phi, rho_dot;
+
 
   // Update the state using Extended Kalman Filter equations
-  VectorXd y = z - hofx;
+  VectorXd y = z - z_pred;
   if( y[1] > PI )
     y[1] -= 2.f*PI;
   if( y[1] < -PI )
     y[1] += 2.f*PI;
+
+
   MatrixXd Hjt = Hj_.transpose();
   MatrixXd S = Hj_*P_*Hjt + R_ekf_;
   MatrixXd Si = S.inverse();
@@ -93,3 +113,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   x_ = x_ + ( K*y );
   P_ = ( I_ - K*Hj_ )*P_;
 }
+
+
+

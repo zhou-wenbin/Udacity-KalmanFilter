@@ -17,14 +17,7 @@ FusionEKF::FusionEKF() {
   previous_timestamp_ = 0;
 
   // initializing matrices
-  // It isn't really necessary to have persistent
-  // storage for these in FusionEKF.
-  // They can just as easily be constructed at local scope
-  // the first time ProcessMeasurement() is called,
-  // then used to initialize persistent containers in
-  // KalmanFilter.  I do use them to initialize containers 
-  // in KalmanFilter, but I'm keeping them here as well because
-  // they are small and if it ain't broke, don't fix it.
+
   R_laser_ = MatrixXd(2, 2);
   R_radar_ = MatrixXd(3, 3);
   H_laser_ = MatrixXd(2, 4);
@@ -146,8 +139,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
     float dt2 = dt*dt;
     float dt3 = dt2*dt;
     float dt4 = dt3*dt;
+
+    
     float dt4over4 = dt4/4.;
     float dt3over2 = dt3/2.;
+
+    ekf_.Q_ = MatrixXd(4, 4);
     ekf_.Q_ << dt4over4*noise_ax,                 0, dt3over2*noise_ax,                0,
 			     0, dt4over4*noise_ay,                 0, dt3over2*noise_ay,
 	     dt3over2*noise_ax,                 0,      dt2*noise_ax,                 0,
