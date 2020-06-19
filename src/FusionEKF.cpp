@@ -74,14 +74,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
 
     previous_timestamp_ = measurement_pack.timestamp_;
 
-    // Estimate the initial state covariance matrix
-    // with a moderate covariance of 1 for the x and y position values.
-    // 
-    // The initial x and y velocities are unknown (we initialized them
-    // as 0 above).  By associating a large covariance of 1000 with them
-    // we are telling the Kalman filter equations that these (totally fabricated) 
-    // initial values of 0 for vx and vy are highly uncertain, and should not be
-    // given very much weight in subsequent measurement updates.
+ 
     MatrixXd P(4, 4);
     P << 1, 0, 0, 0,
 	 0, 1, 0, 0,
@@ -89,12 +82,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
          0, 0, 0, 1000;
 
     // Initialize transition matrix
-    MatrixXd F(4, 4);
-    F << 1, 0, 0, 0,
-	 0, 1, 0, 0,
-         0, 0, 1, 0,
-         0, 0, 0, 1;
-
+    ekf_.F_ = MatrixXd::Identity(4,4)
     // Initialize measurement matrix for laser measurements
     H_laser_ << 1, 0, 0, 0,
                0, 1, 0, 0;

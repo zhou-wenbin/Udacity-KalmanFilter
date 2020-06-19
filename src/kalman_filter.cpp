@@ -59,7 +59,8 @@ void KalmanFilter::Update(const VectorXd &z)
 
   // New state
   x_ = x_ + ( K*y );
-  P_ = ( I_ - K*H_ )*P_;
+  P_ -= K * H_ * P_;
+  //did some changes according to the reviewer
 }
 
 
@@ -72,7 +73,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   float vy = x_[3];
 
 
-//get rid of initial noise
+//avoid division by zero
   if( px == 0. && py == 0. )
     return;
 
@@ -85,12 +86,9 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   double phi = atan2( py, px ); 
   double rho_dot;
 
-  if(fabs(rho) > 0.0001){
-    rho_dot = (px *vx + py*vy)/rho;
-  }
-  else{
-    rho_dot = 0; 
-  }
+
+  rho_dot = (px *vx + py*vy)/rho;
+
 
 
   z_pred << rho, phi, rho_dot;
@@ -112,6 +110,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   // Compute new state
   x_ = x_ + ( K*y );
   P_ = ( I_ - K*Hj_ )*P_;
+  P_ -= K * H_ * P_;
 }
 
 
