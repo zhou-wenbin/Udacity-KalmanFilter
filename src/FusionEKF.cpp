@@ -82,7 +82,11 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
          0, 0, 0, 1000;
 
     // Initialize transition matrix
-    ekf_.F_ = MatrixXd::Identity(4,4)
+     MatrixXd F(4, 4);
+    F << 1, 0, 0, 0,
+	 0, 1, 0, 0,
+         0, 0, 1, 0,
+         0, 0, 0, 1;
     // Initialize measurement matrix for laser measurements
     H_laser_ << 1, 0, 0, 0,
                0, 1, 0, 0;
