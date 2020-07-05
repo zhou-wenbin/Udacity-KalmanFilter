@@ -25,16 +25,16 @@ void KalmanFilter::Init( VectorXd &x_in,
   P_ = P_in;
   F_ = F_in;
   H_ = H_in;
-  Hj_ = Hj_in;
+
   R_ = R_in;
 
-  R_ekf_ = R_ekf_in;
+
 
   Q_ = Q_in;
 
   //define an identity matrix
 
-  I_ = Eigen::MatrixXd::Identity(4,4);
+
 }
 
 void KalmanFilter::Predict() 
@@ -52,6 +52,7 @@ void KalmanFilter::Update(const VectorXd &z)
 
   VectorXd z_pred = H_ * x_;
   VectorXd y = z - z_pred;
+
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_*P_*Ht + R_;
   MatrixXd Si = S.inverse();
@@ -60,7 +61,7 @@ void KalmanFilter::Update(const VectorXd &z)
   // New state
   x_ = x_ + ( K*y );
   P_ -= K * H_ * P_;
-  //did some changes according to the reviewer
+
 }
 
 
@@ -77,7 +78,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   if( px == 0. && py == 0. )
     return;
 
-  Hj_ = tools.CalculateJacobian( x_ );
+  // Hj_ = tools.CalculateJacobian( x_ );
 
 
   VectorXd z_pred(3);
@@ -102,14 +103,13 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
     y[1] += 2.f*PI;
 
 
-  MatrixXd Hjt = Hj_.transpose();
-  MatrixXd S = Hj_*P_*Hjt + R_ekf_;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_*P_*Ht + R_;
   MatrixXd Si = S.inverse();
-  MatrixXd K =  P_*Hjt*Si;
+  MatrixXd K =  P_*Ht*Si;
 
   // Compute new state
   x_ = x_ + ( K*y );
-  P_ = ( I_ - K*Hj_ )*P_;
   P_ -= K * H_ * P_;
 }
 
